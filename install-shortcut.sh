@@ -11,7 +11,6 @@ if [ -z "$OPENCLAW_BIN" ]; then
     echo "⚠ OpenClaw CLI not found in PATH."
     echo "  Make sure OpenClaw is installed: https://docs.openclaw.ai"
     echo "  Trying default location..."
-    # Common locations
     for loc in "$HOME/.nvm/versions/node/"*/bin/openclaw /usr/local/bin/openclaw /opt/homebrew/bin/openclaw; do
         if [ -x "$loc" ]; then
             OPENCLAW_BIN="$loc"
@@ -23,6 +22,15 @@ if [ -z "$OPENCLAW_BIN" ]; then
         echo "  ✗ Could not find openclaw binary. Install OpenClaw first."
         exit 1
     fi
+fi
+
+# Get absolute path to revive script
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REVIVE_SCRIPT="$SCRIPT_DIR/revive-openclaw.sh"
+
+if [ ! -f "$REVIVE_SCRIPT" ]; then
+    echo "✗ revive-openclaw.sh not found in $SCRIPT_DIR"
+    exit 1
 fi
 
 echo ""
@@ -56,16 +64,14 @@ cat > "$APP_DIR/Contents/Info.plist" << 'PLIST'
 </plist>
 PLIST
 
-# Create the executable — uses $OPENCLAW_BIN dynamically
+# Create the executable
 cat > "$APP_DIR/Contents/MacOS/revive" << SCRIPT
 #!/bin/bash
-
-AUTH_FILE="\$HOME/.openclaw/agents/main/agent/auth-profiles.json"
 
 # Prompt for the new API key via macOS dialog
 NEW_KEY=\$(osascript -e '
 tell application "System Events"
-    display dialog "🦞 Revive OpenClaw\n\nPaste your new API key (any provider):" default answer "" with title "Revive OpenClaw" buttons {"Cancel", "Revive!"} default button "Revive!"
+    display dialog "🦞 Revive OpenClaw\n\nPaste your new API key (any provider):\n\nAuto-detects: Google, OpenAI, Anthropic, OpenRouter" default answer "" with title "Revive OpenClaw" buttons {"Cancel", "Revive!"} default button "Revive!"
     set theKey to text returned of result
     return theKey
 end tell
@@ -76,31 +82,14 @@ if [ -z "\$NEW_KEY" ]; then
     exit 0
 fi
 
-# Swap the key
-RESULT=\$(python3 -c "
-import json, sys
-try:
-    with open('\$AUTH_FILE','r') as f: d=json.load(f)
-    for p in d.get('profiles',{}).values():
-        if 'key' in p: p['key']='\$NEW_KEY'
-    for s in d.get('usageStats',{}).values(): s['errorCount']=0
-    with open('\$AUTH_FILE','w') as f: json.dump(d,f,indent=2)
-    print('OK')
-except Exception as e:
-    print(f'ERROR: {e}')
-    sys.exit(1)
-" 2>&1)
+# Run the main revive script
+RESULT=\$("$REVIVE_SCRIPT" "\$NEW_KEY" 2>&1)
 
-if [ "\$RESULT" != "OK" ]; then
-    osascript -e "display notification \"❌ Failed: \$RESULT\" with title \"OpenClaw Revive\""
-    exit 1
+if [ \$? -eq 0 ]; then
+    osascript -e "display notification \"API key swapped & gateway restarted!\" with title \"🦞 OpenClaw Revived!\" sound name \"Glass\""
+else
+    osascript -e "display notification \"❌ Something went wrong. Check terminal.\" with title \"OpenClaw Revive\""
 fi
-
-# Restart gateway
-$OPENCLAW_BIN gateway restart 2>/dev/null
-
-# Success notification
-osascript -e "display notification \"API key swapped & gateway restarted!\" with title \"🦞 OpenClaw Revived!\" sound name \"Glass\""
 SCRIPT
 
 chmod +x "$APP_DIR/Contents/MacOS/revive"
@@ -110,7 +99,7 @@ echo ""
 echo "How to use:"
 echo "  1. Press ⌘+Space (Spotlight)"
 echo "  2. Type 'Revive OpenClaw'"
-echo "  3. Paste your new API key"
+echo "  3. Paste your new API key (any provider)"
 echo "  4. Click 'Revive!'"
 echo ""
 echo "🎉 Done!"
