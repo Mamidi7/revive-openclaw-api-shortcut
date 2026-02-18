@@ -99,10 +99,18 @@ echo -e "  Current provider: ${CYAN}${CURRENT_PROVIDER}${NC}"
 echo -e "  New key provider: ${CYAN}${NEW_PROVIDER}${NC}"
 
 if [ "$NEW_PROVIDER" = "unknown" ]; then
-    echo -e "${YELLOW}  ⚠ Could not detect provider from key format${NC}"
-    echo -e "${YELLOW}    Assuming same provider as current (${CURRENT_PROVIDER})${NC}"
-    NEW_PROVIDER="$CURRENT_PROVIDER"
-    NEW_DEFAULT_MODEL=""
+    echo -e "${RED}  ✗ Could not detect provider from key format${NC}"
+    echo ""
+    echo -e "${YELLOW}  This key doesn't match any known provider:${NC}"
+    echo "    Google Gemini  → key starts with AIzaSy..."
+    echo "    OpenAI         → key starts with sk-proj-... or sk-..."
+    echo "    Anthropic      → key starts with sk-ant-..."
+    echo "    OpenRouter     → key starts with sk-or-..."
+    echo ""
+    echo -e "${YELLOW}  Make sure you're pasting the correct API key.${NC}"
+    echo -e "${YELLOW}  The key must be from a supported provider above.${NC}"
+    echo ""
+    exit 1
 fi
 
 if [ "$NEW_PROVIDER" = "$CURRENT_PROVIDER" ]; then

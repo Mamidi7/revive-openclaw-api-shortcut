@@ -162,9 +162,42 @@ No manual JSON editing. No remembering file paths. Just one command.
 |---------|----------|
 | `openclaw: command not found` | Make sure OpenClaw is installed and in your PATH |
 | `Auth file not found` | Run `openclaw doctor` to fix your installation |
+| `Could not detect provider` | Your key doesn't match a known format. See supported formats above |
 | Key still not working | Verify your new key is valid at your provider's dashboard |
 | Want a different model | Run `openclaw models set <provider>/<model>` |
 | Gateway won't restart | Run `openclaw gateway stop && openclaw gateway start` |
+
+---
+
+## Security
+
+### Your API key never leaves your machine
+
+This tool is **100% local**. Here's what happens when you use it:
+
+| Concern | Answer |
+|---------|--------|
+| Is my key sent anywhere? | **No.** Zero network calls. Only writes to local files on your machine. |
+| Is my key logged? | **No.** Shown masked in terminal (e.g. `AIzaSyCo...zNWv0`). Never the full key. |
+| Where is my key stored? | In `~/.openclaw/agents/main/agent/auth-profiles.json` — same file OpenClaw uses. |
+| Is it encrypted? | Plain text JSON — this is how OpenClaw stores keys by default. This tool doesn't change that. |
+| Any analytics/telemetry? | **None.** No tracking, no call-home, no data collection. |
+| Can I audit the code? | **Yes.** Readable bash + python. No obfuscation. |
+
+### Key validation
+
+The script **rejects unrecognized key formats** to prevent accidentally breaking your setup with an incompatible key. Only keys matching supported providers are accepted.
+
+### Spotlight vs Terminal
+
+The **macOS Spotlight app** is more secure than the terminal command — dialog input is **not saved** to shell history (`~/.zsh_history`), while terminal commands are.
+
+### Best practices
+
+- Only paste keys you generated yourself
+- Rotate keys regularly at your provider's dashboard
+- Revoke old/exhausted keys after generating new ones
+- Never share your API key publicly
 
 ---
 
