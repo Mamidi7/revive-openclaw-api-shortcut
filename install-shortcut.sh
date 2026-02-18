@@ -65,7 +65,7 @@ AUTH_FILE="\$HOME/.openclaw/agents/main/agent/auth-profiles.json"
 # Prompt for the new API key via macOS dialog
 NEW_KEY=\$(osascript -e '
 tell application "System Events"
-    display dialog "🦞 Revive OpenClaw\n\nPaste your new Gemini API key:" default answer "" with title "Revive OpenClaw" buttons {"Cancel", "Revive!"} default button "Revive!"
+    display dialog "🦞 Revive OpenClaw\n\nPaste your new API key (any provider):" default answer "" with title "Revive OpenClaw" buttons {"Cancel", "Revive!"} default button "Revive!"
     set theKey to text returned of result
     return theKey
 end tell

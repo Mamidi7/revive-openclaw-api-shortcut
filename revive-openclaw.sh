@@ -5,8 +5,10 @@
 #
 #  Usage:  ./revive-openclaw.sh YOUR_NEW_API_KEY
 #
-#  Example:
-#    ./revive-openclaw.sh AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+#  Examples:
+#    ./revive-openclaw.sh sk-proj-XXXXXXXXXXXXXXXX       (OpenAI)
+#    ./revive-openclaw.sh AIzaSyXXXXXXXXXXXXXXXXXXXXX    (Google Gemini)
+#    ./revive-openclaw.sh sk-ant-XXXXXXXXXXXXXXXX         (Anthropic)
 #
 # ═══════════════════════════════════════════════════════════
 
@@ -28,8 +30,10 @@ echo ""
 if [ -z "$1" ]; then
     echo -e "${YELLOW}Usage:${NC}  ./revive-openclaw.sh YOUR_NEW_API_KEY"
     echo ""
-    echo -e "${YELLOW}Example:${NC}"
-    echo "  ./revive-openclaw.sh AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+    echo -e "${YELLOW}Examples:${NC}"
+    echo "  ./revive-openclaw.sh sk-proj-XXXXX       # OpenAI"
+    echo "  ./revive-openclaw.sh AIzaSyXXXXX          # Google Gemini"
+    echo "  ./revive-openclaw.sh sk-ant-XXXXX         # Anthropic"
     echo ""
     exit 1
 fi
@@ -111,7 +115,7 @@ echo -e "${GREEN}  ✓ Gateway restarted${NC}"
 echo -e "${YELLOW}[3/3]${NC} Verifying..."
 sleep 2
 
-CURRENT=$(openclaw models status 2>/dev/null | grep -o 'google:default=.*')
+CURRENT=$(openclaw models status 2>/dev/null | grep -oE '[a-z]+:default=\S+')
 if [ -n "$CURRENT" ]; then
     echo -e "${GREEN}  ✓ Active: $CURRENT${NC}"
 else

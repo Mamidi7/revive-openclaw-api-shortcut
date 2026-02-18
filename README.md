@@ -2,7 +2,7 @@
 
 **One command to fix OpenClaw when your API key quota is exhausted.**
 
-When your Gemini API key runs out of quota, OpenClaw stops working. This tool swaps your exhausted key with a new one and restarts the gateway — in seconds.
+When your API key runs out of quota, OpenClaw stops responding. This tool swaps your exhausted key with a new one and restarts the gateway — in seconds. Works with **any AI provider** (OpenAI, Google Gemini, Anthropic, and more).
 
 ---
 
@@ -19,7 +19,7 @@ source ~/.zshrc
 revive YOUR_NEW_API_KEY
 ```
 
-### Option 2: macOS Spotlight
+### Option 2: macOS Spotlight (No Terminal Needed)
 
 ```bash
 # Install once
@@ -38,19 +38,35 @@ chmod +x revive-openclaw.sh
 
 ---
 
+## Supported Providers
+
+Works with **any** API key. Just paste your key and go:
+
+| Provider | Key Format | Example |
+|----------|-----------|---------|
+| **OpenAI** | `sk-proj-...` | `revive sk-proj-XXXXXX` |
+| **Google Gemini** | `AIzaSy...` | `revive AIzaSyXXXXXX` |
+| **Anthropic** | `sk-ant-...` | `revive sk-ant-XXXXXX` |
+| **OpenRouter** | `sk-or-...` | `revive sk-or-XXXXXX` |
+| **Any other** | Any format | `revive YOUR_KEY` |
+
+---
+
 ## How to Get a New API Key
 
-1. Go to [Google AI Studio](https://aistudio.google.com/apikey)
-2. Click **"Create API Key"**
-3. Copy it (starts with `AIzaSy...`)
-4. Use it with any method above
+| Provider | Where to Get |
+|----------|-------------|
+| **Google Gemini** | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) |
+| **OpenAI** | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) |
+| **Anthropic** | [console.anthropic.com](https://console.anthropic.com/) |
+| **OpenRouter** | [openrouter.ai/keys](https://openrouter.ai/keys) |
 
 ---
 
 ## What It Does
 
-1. 🔑 **Swaps** the old key with your new key in OpenClaw's auth config
-2. 🔄 **Resets** error counts so OpenClaw accepts the new key
+1. 🔑 **Swaps** the old exhausted key with your new key in OpenClaw's auth config
+2. 🔄 **Resets** error counts so OpenClaw accepts the new key immediately
 3. 🚀 **Restarts** the gateway so changes take effect
 4. ✅ **Verifies** the new key is active
 
@@ -59,7 +75,7 @@ chmod +x revive-openclaw.sh
 ## Files
 
 ```
-openclaw-revive/
+revive-openclaw-api-shortcut/
 ├── revive-openclaw.sh     # Main swap script
 ├── install-alias.sh       # Adds 'revive' command to your terminal
 ├── install-shortcut.sh    # Creates macOS Spotlight app
@@ -96,8 +112,8 @@ No manual JSON editing. No guessing file paths. Just one command.
 | Problem | Solution |
 |---------|----------|
 | `openclaw: command not found` | Make sure OpenClaw is installed and in your PATH |
-| `Auth file not found` | Run `openclaw doctor` to fix your OpenClaw installation |
-| Key still not working | Verify your new key at [AI Studio](https://aistudio.google.com/apikey) |
+| `Auth file not found` | Run `openclaw doctor` to fix your installation |
+| Key still not working | Verify your new key is valid at your provider's dashboard |
 | Gateway won't restart | Run `openclaw gateway stop && openclaw gateway start` |
 
 ---
