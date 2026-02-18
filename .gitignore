@@ -1,0 +1,14 @@
+# macOS
+.DS_Store
+
+# Environment / secrets
+.env
+*.key
+*.token
+
+# Backups created by the scripts
+*.bak
+
+# IDE
+.vscode/
+.idea/
