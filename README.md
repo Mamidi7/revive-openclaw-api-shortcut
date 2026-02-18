@@ -48,7 +48,7 @@ The script recognizes these key formats automatically:
 
 | Key Prefix | Provider | Default Model |
 |-----------|----------|---------------|
-| `AIzaSy...` | Google Gemini | `google/gemini-2.5-pro-preview` |
+| `AIzaSy...` | Google Gemini | `google/gemini-3-pro-preview` |
 | `sk-proj-...` / `sk-...` | OpenAI | `openai/gpt-4o` |
 | `sk-ant-...` | Anthropic | `anthropic/claude-sonnet-4-20250514` |
 | `sk-or-...` | OpenRouter | `openrouter/auto` |

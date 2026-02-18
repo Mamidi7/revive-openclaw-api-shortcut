@@ -124,7 +124,7 @@ detect_provider() {
 default_model() {
     local provider="$1"
     case "$provider" in
-        google)              echo "google/gemini-2.5-pro-preview" ;;
+        google)              echo "google/gemini-3-pro-preview" ;;
         openai)              echo "openai/gpt-4o" ;;
         anthropic)           echo "anthropic/claude-sonnet-4-20250514" ;;
         openrouter)          echo "openrouter/auto" ;;
