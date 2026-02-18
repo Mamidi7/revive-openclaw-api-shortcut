@@ -199,7 +199,7 @@ import json
 with open('$AUTH_FILE') as f:
     data = json.load(f)
 for name, profile in data.get('profiles', {}).items():
-    key = profile.get('key', '')
+    key = profile.get('key') or profile.get('token')
     if key:
         print(key)
         break
@@ -221,7 +221,6 @@ auth_file = "$AUTH_FILE"
 config_file = "$CONFIG_FILE"
 new_key = "$NEW_KEY"
 new_provider = "$NEW_PROVIDER"
-current_provider = "$CURRENT_PROVIDER"
 switching = "$SWITCHING_PROVIDER" == "true"
 new_model = "$NEW_DEFAULT_MODEL"
 
@@ -229,15 +228,28 @@ new_model = "$NEW_DEFAULT_MODEL"
 with open(auth_file, 'r') as f:
     auth = json.load(f)
 
+# Determine auth type based on provider
+if new_provider == 'google':
+    auth_type = 'api_key'
+    key_field = 'key'
+    config_mode = 'api_key'
+else:
+    auth_type = 'token'
+    key_field = 'token'
+    config_mode = 'token'
+
 if switching:
     # Remove old profile, create new one
     auth['profiles'] = {}
     new_profile_id = f"{new_provider}:default"
-    auth['profiles'][new_profile_id] = {
-        "type": "api_key",
-        "provider": new_provider,
-        "key": new_key
+    
+    profile_data = {
+        "type": auth_type,
+        "provider": new_provider
     }
+    profile_data[key_field] = new_key
+    
+    auth['profiles'][new_profile_id] = profile_data
     auth['lastGood'] = {new_provider: new_profile_id}
     auth['usageStats'] = {
         new_profile_id: {
@@ -247,9 +259,26 @@ if switching:
     }
 else:
     # Same provider — just swap the key
+    found = False
     for name, profile in auth.get('profiles', {}).items():
-        if 'key' in profile:
-            profile['key'] = new_key
+        if profile.get('provider') == new_provider:
+            if 'key' in profile:
+                profile['key'] = new_key
+                found = True
+            elif 'token' in profile:
+                profile['token'] = new_key
+                found = True
+    
+    # If not found (e.g. corruption), force create
+    if not found:
+        new_profile_id = f"{new_provider}:default"
+        profile_data = {
+            "type": auth_type,
+            "provider": new_provider
+        }
+        profile_data[key_field] = new_key
+        auth['profiles'][new_profile_id] = profile_data
+        
     for name in auth.get('usageStats', {}):
         auth['usageStats'][name]['errorCount'] = 0
 
@@ -265,7 +294,7 @@ if switching and new_model:
         config.setdefault('auth', {})['profiles'] = {
             f"{new_provider}:default": {
                 "provider": new_provider,
-                "mode": "api_key"
+                "mode": config_mode
             }
         }
         config.setdefault('agents', {}).setdefault('defaults', {}).setdefault('model', {})['primary'] = new_model
