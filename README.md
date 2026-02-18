@@ -4,7 +4,7 @@
 
 When your API key runs out of quota, OpenClaw stops responding. This tool swaps your exhausted key with a new one and restarts the gateway — back online in seconds.
 
-**Works with any AI provider.** Auto-detects from your key format — no extra configuration needed.
+Supports **all OpenClaw providers** — Google, OpenAI, Anthropic, Groq, Mistral, xAI, Amazon Bedrock, OpenRouter, and more.
 
 ---
 
@@ -40,20 +40,59 @@ chmod +x revive-openclaw.sh
 
 ---
 
-## Auto-Detection: How It Knows Your Provider
+## Supported Providers
 
-The script automatically detects the provider from your key format — you don't need to specify anything:
+### Auto-Detected (just paste the key)
 
-| Key Starts With | Detected Provider | Default Model |
-|----------------|------------------|---------------|
+The script recognizes these key formats automatically:
+
+| Key Prefix | Provider | Default Model |
+|-----------|----------|---------------|
 | `AIzaSy...` | Google Gemini | `google/gemini-2.5-pro-preview` |
-| `sk-proj-...` or `sk-...` | OpenAI | `openai/gpt-4o` |
+| `sk-proj-...` / `sk-...` | OpenAI | `openai/gpt-4o` |
 | `sk-ant-...` | Anthropic | `anthropic/claude-sonnet-4-20250514` |
 | `sk-or-...` | OpenRouter | `openrouter/auto` |
+| `gsk_...` | Groq | `groq/llama-3.3-70b-versatile` |
+| `xai-...` | xAI (Grok) | `xai/grok-3` |
+| `hf_...` | Hugging Face | `huggingface/meta-llama/Llama-3.3-70B-Instruct` |
+
+### Manual Provider (use `--provider`)
+
+For providers whose keys don't have a recognizable prefix, use the `--provider` flag:
+
+```bash
+./revive-openclaw.sh YOUR_API_KEY --provider mistral
+./revive-openclaw.sh YOUR_API_KEY --provider amazon-bedrock
+./revive-openclaw.sh YOUR_API_KEY --provider google-vertex
+./revive-openclaw.sh YOUR_API_KEY --provider cerebras
+```
+
+**All OpenClaw providers:**
+
+| Provider ID | Notes |
+|-------------|-------|
+| `google` | Google Gemini via AI Studio |
+| `openai` | OpenAI API |
+| `anthropic` | Anthropic Claude |
+| `openrouter` | OpenRouter (multi-provider) |
+| `groq` | Groq (fast inference) |
+| `mistral` | Mistral AI |
+| `xai` | xAI (Grok) |
+| `amazon-bedrock` | AWS Bedrock |
+| `google-vertex` | Google Vertex AI |
+| `cerebras` | Cerebras |
+| `minimax` | MiniMax |
+| `huggingface` | Hugging Face |
+| `github-copilot` | GitHub Copilot |
+| `azure-openai-responses` | Azure OpenAI |
+
+---
+
+## How It Works
 
 ### Same Provider → Key Swap (Fast)
 
-If your new key is from the **same provider** you're already using, the script simply swaps the key. Nothing else changes.
+If your new key is from the **same provider** you're already using, only the key is swapped:
 
 ```
 Currently on Google → paste new Google key → ✅ instant swap
@@ -72,7 +111,15 @@ If your new key is from a **different provider**, the script handles everything:
 Currently on Google → paste OpenAI key → ✅ auto-switches to OpenAI + gpt-4o
 ```
 
-No errors. No manual configuration. Just paste and go.
+### Unknown Key → Helpful Error
+
+If the key format isn't recognized, the script **stops safely** and tells you to use `--provider`:
+
+```
+✗ Could not auto-detect provider from key format
+  Use --provider to specify it manually:
+    ./revive-openclaw.sh YOUR_KEY --provider groq
+```
 
 ---
 
@@ -83,18 +130,10 @@ No errors. No manual configuration. Just paste and go.
 | **Google Gemini** | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) |
 | **OpenAI** | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) |
 | **Anthropic** | [console.anthropic.com](https://console.anthropic.com/) |
+| **Groq** | [console.groq.com/keys](https://console.groq.com/keys) |
+| **Mistral** | [console.mistral.ai/api-keys](https://console.mistral.ai/api-keys/) |
+| **xAI** | [console.x.ai](https://console.x.ai/) |
 | **OpenRouter** | [openrouter.ai/keys](https://openrouter.ai/keys) |
-
----
-
-## What It Does
-
-1. 🔍 **Detects** your provider automatically from the key format
-2. 🔑 **Swaps** the old exhausted key with your new key
-3. 🔄 **Switches** the provider and model if needed (auto)
-4. 🧹 **Resets** error counts so OpenClaw accepts the new key
-5. 🚀 **Restarts** the gateway so changes take effect
-6. ✅ **Verifies** the new key is active
 
 ---
 
@@ -104,12 +143,13 @@ After reviving, if you want a different model than the default:
 
 ```bash
 # See available models
-openclaw models list
+openclaw models list --all
 
 # Set your preferred model
 openclaw models set google/gemini-2.5-flash-preview
 openclaw models set openai/gpt-4o-mini
-openclaw models set anthropic/claude-haiku-3-20240307
+openclaw models set anthropic/claude-haiku-4-5-20251001
+openclaw models set groq/llama-3.3-70b-versatile
 ```
 
 ---
@@ -135,34 +175,13 @@ revive-openclaw-api-shortcut/
 
 ---
 
-## How It Works
-
-OpenClaw stores its configuration across two files:
-
-| File | What It Stores |
-|------|---------------|
-| `~/.openclaw/agents/main/agent/auth-profiles.json` | API key, provider, error counts |
-| `~/.openclaw/openclaw.json` | Default model, auth mode |
-
-When your key quota runs out, the `errorCount` goes up and OpenClaw stops calling the API. This tool:
-
-1. Reads both config files
-2. Detects the new key's provider
-3. Updates the key (and provider + model if switching)
-4. Resets `errorCount` to 0
-5. Restarts the gateway
-
-No manual JSON editing. No remembering file paths. Just one command.
-
----
-
 ## Troubleshooting
 
 | Problem | Solution |
 |---------|----------|
 | `openclaw: command not found` | Make sure OpenClaw is installed and in your PATH |
 | `Auth file not found` | Run `openclaw doctor` to fix your installation |
-| `Could not detect provider` | Your key doesn't match a known format. See supported formats above |
+| `Could not detect provider` | Use `--provider` flag: `./revive-openclaw.sh KEY --provider groq` |
 | Key still not working | Verify your new key is valid at your provider's dashboard |
 | Want a different model | Run `openclaw models set <provider>/<model>` |
 | Gateway won't restart | Run `openclaw gateway stop && openclaw gateway start` |
@@ -186,7 +205,7 @@ This tool is **100% local**. Here's what happens when you use it:
 
 ### Key validation
 
-The script **rejects unrecognized key formats** to prevent accidentally breaking your setup with an incompatible key. Only keys matching supported providers are accepted.
+The script **rejects unrecognized key formats** (unless `--provider` is specified) to prevent accidentally breaking your setup with an incompatible key.
 
 ### Spotlight vs Terminal
 

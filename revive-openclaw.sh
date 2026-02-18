@@ -3,16 +3,13 @@
 #  🦞 REVIVE OPENCLAW — One command. New key. Back online.
 # ═══════════════════════════════════════════════════════════
 #
-#  Auto-detects your provider from the key format.
-#  Handles same-provider swaps AND full provider switches.
+#  Auto-detects provider from key format when possible.
+#  Supports ALL OpenClaw providers: Google, OpenAI, Anthropic,
+#  Groq, Mistral, xAI, Amazon Bedrock, OpenRouter, and more.
 #
-#  Usage:  ./revive-openclaw.sh YOUR_NEW_API_KEY
-#
-#  Examples:
-#    ./revive-openclaw.sh AIzaSyXXXXXXX        (Google Gemini)
-#    ./revive-openclaw.sh sk-proj-XXXXX         (OpenAI)
-#    ./revive-openclaw.sh sk-ant-XXXXX          (Anthropic)
-#    ./revive-openclaw.sh sk-or-XXXXX           (OpenRouter)
+#  Usage:
+#    ./revive-openclaw.sh YOUR_NEW_API_KEY
+#    ./revive-openclaw.sh YOUR_NEW_API_KEY --provider groq
 #
 # ═══════════════════════════════════════════════════════════
 
@@ -31,20 +28,65 @@ echo -e "${CYAN}  🦞 OpenClaw Revive — API Key Swap    ${NC}"
 echo -e "${CYAN}═══════════════════════════════════════${NC}"
 echo ""
 
+# ─── Parse arguments ───
+NEW_KEY=""
+FORCE_PROVIDER=""
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --provider)
+            FORCE_PROVIDER="$2"
+            shift 2
+            ;;
+        --help|-h)
+            echo "Usage: ./revive-openclaw.sh YOUR_API_KEY [--provider PROVIDER]"
+            echo ""
+            echo "Arguments:"
+            echo "  YOUR_API_KEY         Your new API key"
+            echo "  --provider PROVIDER  Force a specific provider (optional)"
+            echo ""
+            echo "Auto-detected providers:"
+            echo "  AIzaSy...       → google"
+            echo "  sk-proj-...     → openai"
+            echo "  sk-ant-...      → anthropic"
+            echo "  sk-or-...       → openrouter"
+            echo "  gsk_...         → groq"
+            echo "  xai-...         → xai"
+            echo ""
+            echo "All supported providers (use --provider):"
+            echo "  google, openai, anthropic, openrouter, groq, mistral,"
+            echo "  xai, amazon-bedrock, google-vertex, cerebras, minimax,"
+            echo "  huggingface, github-copilot, azure-openai-responses"
+            echo ""
+            exit 0
+            ;;
+        *)
+            if [ -z "$NEW_KEY" ]; then
+                NEW_KEY="$1"
+            fi
+            shift
+            ;;
+    esac
+done
+
 # ─── Check if key was provided ───
-if [ -z "$1" ]; then
-    echo -e "${YELLOW}Usage:${NC}  ./revive-openclaw.sh YOUR_NEW_API_KEY"
+if [ -z "$NEW_KEY" ]; then
+    echo -e "${YELLOW}Usage:${NC}  ./revive-openclaw.sh YOUR_NEW_API_KEY [--provider PROVIDER]"
     echo ""
-    echo -e "${YELLOW}Auto-detects your provider from the key format:${NC}"
-    echo "  ./revive-openclaw.sh AIzaSyXXXXX        # Google Gemini"
-    echo "  ./revive-openclaw.sh sk-proj-XXXXX       # OpenAI"
-    echo "  ./revive-openclaw.sh sk-ant-XXXXX        # Anthropic"
-    echo "  ./revive-openclaw.sh sk-or-XXXXX         # OpenRouter"
+    echo -e "${YELLOW}Auto-detects provider from key format:${NC}"
+    echo "  ./revive-openclaw.sh AIzaSyXXXXX            # Google Gemini"
+    echo "  ./revive-openclaw.sh sk-proj-XXXXX           # OpenAI"
+    echo "  ./revive-openclaw.sh sk-ant-XXXXX            # Anthropic"
+    echo "  ./revive-openclaw.sh gsk_XXXXX               # Groq"
+    echo "  ./revive-openclaw.sh xai-XXXXX               # xAI (Grok)"
+    echo ""
+    echo -e "${YELLOW}For other providers, use --provider:${NC}"
+    echo "  ./revive-openclaw.sh YOUR_KEY --provider mistral"
+    echo "  ./revive-openclaw.sh YOUR_KEY --provider amazon-bedrock"
+    echo "  ./revive-openclaw.sh YOUR_KEY --provider groq"
     echo ""
     exit 1
 fi
-
-NEW_KEY="$1"
 
 # ─── Check files exist ───
 if [ ! -f "$AUTH_FILE" ]; then
@@ -53,7 +95,7 @@ if [ ! -f "$AUTH_FILE" ]; then
     exit 1
 fi
 
-# ─── Auto-detect provider and assign default model ───
+# ─── Auto-detect provider from key format ───
 detect_provider() {
     local key="$1"
     if [[ "$key" == AIzaSy* ]]; then
@@ -62,25 +104,50 @@ detect_provider() {
         echo "anthropic"
     elif [[ "$key" == sk-or-* ]]; then
         echo "openrouter"
+    elif [[ "$key" == sk-proj-* ]] || [[ "$key" == sk-svcacct-* ]]; then
+        echo "openai"
+    elif [[ "$key" == gsk_* ]]; then
+        echo "groq"
+    elif [[ "$key" == xai-* ]]; then
+        echo "xai"
+    elif [[ "$key" == hf_* ]]; then
+        echo "huggingface"
     elif [[ "$key" == sk-* ]]; then
+        # Generic sk- prefix — most likely OpenAI
         echo "openai"
     else
         echo "unknown"
     fi
 }
 
+# ─── Default model per provider ───
 default_model() {
     local provider="$1"
     case "$provider" in
-        google)     echo "google/gemini-2.5-pro-preview" ;;
-        openai)     echo "openai/gpt-4o" ;;
-        anthropic)  echo "anthropic/claude-sonnet-4-20250514" ;;
-        openrouter) echo "openrouter/auto" ;;
-        *)          echo "" ;;
+        google)              echo "google/gemini-2.5-pro-preview" ;;
+        openai)              echo "openai/gpt-4o" ;;
+        anthropic)           echo "anthropic/claude-sonnet-4-20250514" ;;
+        openrouter)          echo "openrouter/auto" ;;
+        groq)                echo "groq/llama-3.3-70b-versatile" ;;
+        xai)                 echo "xai/grok-3" ;;
+        mistral)             echo "mistral/mistral-large-latest" ;;
+        amazon-bedrock)      echo "amazon-bedrock/anthropic.claude-sonnet-4-20250514-v1:0" ;;
+        google-vertex)       echo "google-vertex/gemini-2.5-pro-preview" ;;
+        cerebras)            echo "cerebras/llama-3.3-70b" ;;
+        huggingface)         echo "huggingface/meta-llama/Llama-3.3-70B-Instruct" ;;
+        github-copilot)      echo "github-copilot/gpt-4o" ;;
+        minimax)             echo "minimax/minimax-m2" ;;
+        *)                   echo "$provider/auto" ;;
     esac
 }
 
-NEW_PROVIDER=$(detect_provider "$NEW_KEY")
+# ─── Determine provider ───
+if [ -n "$FORCE_PROVIDER" ]; then
+    NEW_PROVIDER="$FORCE_PROVIDER"
+else
+    NEW_PROVIDER=$(detect_provider "$NEW_KEY")
+fi
+
 NEW_DEFAULT_MODEL=$(default_model "$NEW_PROVIDER")
 
 echo -e "${YELLOW}[1/4]${NC} Detecting provider..."
@@ -99,16 +166,20 @@ echo -e "  Current provider: ${CYAN}${CURRENT_PROVIDER}${NC}"
 echo -e "  New key provider: ${CYAN}${NEW_PROVIDER}${NC}"
 
 if [ "$NEW_PROVIDER" = "unknown" ]; then
-    echo -e "${RED}  ✗ Could not detect provider from key format${NC}"
+    echo -e "${RED}  ✗ Could not auto-detect provider from key format${NC}"
     echo ""
-    echo -e "${YELLOW}  This key doesn't match any known provider:${NC}"
-    echo "    Google Gemini  → key starts with AIzaSy..."
-    echo "    OpenAI         → key starts with sk-proj-... or sk-..."
-    echo "    Anthropic      → key starts with sk-ant-..."
-    echo "    OpenRouter     → key starts with sk-or-..."
+    echo -e "${YELLOW}  Use --provider to specify it manually:${NC}"
+    echo "    ./revive-openclaw.sh $NEW_KEY --provider google"
+    echo "    ./revive-openclaw.sh $NEW_KEY --provider openai"
+    echo "    ./revive-openclaw.sh $NEW_KEY --provider anthropic"
+    echo "    ./revive-openclaw.sh $NEW_KEY --provider groq"
+    echo "    ./revive-openclaw.sh $NEW_KEY --provider mistral"
+    echo "    ./revive-openclaw.sh $NEW_KEY --provider xai"
+    echo "    ./revive-openclaw.sh $NEW_KEY --provider amazon-bedrock"
     echo ""
-    echo -e "${YELLOW}  Make sure you're pasting the correct API key.${NC}"
-    echo -e "${YELLOW}  The key must be from a supported provider above.${NC}"
+    echo -e "  All providers: google, openai, anthropic, openrouter, groq,"
+    echo "  mistral, xai, amazon-bedrock, google-vertex, cerebras,"
+    echo "  minimax, huggingface, github-copilot, azure-openai-responses"
     echo ""
     exit 1
 fi
@@ -160,20 +231,14 @@ with open(auth_file, 'r') as f:
 
 if switching:
     # Remove old profile, create new one
-    old_profiles = dict(auth.get('profiles', {}))
     auth['profiles'] = {}
-    
     new_profile_id = f"{new_provider}:default"
     auth['profiles'][new_profile_id] = {
         "type": "api_key",
         "provider": new_provider,
         "key": new_key
     }
-    
-    # Update lastGood
     auth['lastGood'] = {new_provider: new_profile_id}
-    
-    # Reset usageStats
     auth['usageStats'] = {
         new_profile_id: {
             "lastUsed": 0,
@@ -185,8 +250,6 @@ else:
     for name, profile in auth.get('profiles', {}).items():
         if 'key' in profile:
             profile['key'] = new_key
-    
-    # Reset error counts
     for name in auth.get('usageStats', {}):
         auth['usageStats'][name]['errorCount'] = 0
 
@@ -198,25 +261,21 @@ if switching and new_model:
     try:
         with open(config_file, 'r') as f:
             config = json.load(f)
-        
-        # Update auth section
+
         config.setdefault('auth', {})['profiles'] = {
             f"{new_provider}:default": {
                 "provider": new_provider,
                 "mode": "api_key"
             }
         }
-        
-        # Update default model
         config.setdefault('agents', {}).setdefault('defaults', {}).setdefault('model', {})['primary'] = new_model
-        
+
         with open(config_file, 'w') as f:
             json.dump(config, f, indent=2)
-        
+
         print(f"SWITCHED to {new_provider} with model {new_model}")
     except Exception as e:
         print(f"KEY_ONLY: {e}")
-        sys.exit(0)  # Key was swapped, config update failed but not fatal
 else:
     print("SWAPPED")
 PYEOF
@@ -240,7 +299,7 @@ echo -e "${GREEN}  ✓ Gateway restarted${NC}"
 echo -e "${YELLOW}[4/4]${NC} Verifying..."
 sleep 2
 
-CURRENT=$(openclaw models status 2>/dev/null | grep -oE '[a-z]+:default=\S+')
+CURRENT=$(openclaw models status 2>/dev/null | grep -oE '[a-z-]+:default=\S+')
 if [ -n "$CURRENT" ]; then
     echo -e "${GREEN}  ✓ Active: $CURRENT${NC}"
 else
