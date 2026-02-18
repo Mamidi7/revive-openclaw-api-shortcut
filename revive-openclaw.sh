@@ -3,12 +3,15 @@
 #  🦞 REVIVE OPENCLAW — One command. New key. Back online.
 # ═══════════════════════════════════════════════════════════
 #
+#  Swaps your exhausted API key with a fresh one from the
+#  SAME provider. Does NOT switch providers/models.
+#
 #  Usage:  ./revive-openclaw.sh YOUR_NEW_API_KEY
 #
-#  Examples:
-#    ./revive-openclaw.sh sk-proj-XXXXXXXXXXXXXXXX       (OpenAI)
-#    ./revive-openclaw.sh AIzaSyXXXXXXXXXXXXXXXXXXXXX    (Google Gemini)
-#    ./revive-openclaw.sh sk-ant-XXXXXXXXXXXXXXXX         (Anthropic)
+#  Example:
+#    ./revive-openclaw.sh AIzaSyXXXXXXX    (if you're on Google)
+#    ./revive-openclaw.sh sk-proj-XXXXX     (if you're on OpenAI)
+#    ./revive-openclaw.sh sk-ant-XXXXX      (if you're on Anthropic)
 #
 # ═══════════════════════════════════════════════════════════
 
@@ -30,10 +33,12 @@ echo ""
 if [ -z "$1" ]; then
     echo -e "${YELLOW}Usage:${NC}  ./revive-openclaw.sh YOUR_NEW_API_KEY"
     echo ""
+    echo -e "${YELLOW}Note:${NC}  New key must be from the SAME provider you're currently using."
+    echo ""
     echo -e "${YELLOW}Examples:${NC}"
-    echo "  ./revive-openclaw.sh sk-proj-XXXXX       # OpenAI"
-    echo "  ./revive-openclaw.sh AIzaSyXXXXX          # Google Gemini"
-    echo "  ./revive-openclaw.sh sk-ant-XXXXX         # Anthropic"
+    echo "  ./revive-openclaw.sh AIzaSyXXXXX       # if you're on Google Gemini"
+    echo "  ./revive-openclaw.sh sk-proj-XXXXX      # if you're on OpenAI"
+    echo "  ./revive-openclaw.sh sk-ant-XXXXX       # if you're on Anthropic"
     echo ""
     exit 1
 fi

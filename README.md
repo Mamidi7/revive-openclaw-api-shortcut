@@ -2,7 +2,7 @@
 
 **One command to fix OpenClaw when your API key quota is exhausted.**
 
-When your API key runs out of quota, OpenClaw stops responding. This tool swaps your exhausted key with a new one and restarts the gateway — in seconds. Works with **any AI provider** (OpenAI, Google Gemini, Anthropic, and more).
+When your API key runs out of quota, OpenClaw stops responding. This tool swaps your exhausted key with a fresh one from the **same provider** and restarts the gateway — back online in seconds.
 
 ---
 
@@ -15,7 +15,7 @@ When your API key runs out of quota, OpenClaw stops responding. This tool swaps 
 chmod +x install-alias.sh && ./install-alias.sh
 source ~/.zshrc
 
-# Use anytime
+# Use anytime — just paste your new key from the same provider
 revive YOUR_NEW_API_KEY
 ```
 
@@ -38,21 +38,45 @@ chmod +x revive-openclaw.sh
 
 ---
 
-## Supported Providers
+## How It Works
 
-Works with **any** API key. Just paste your key and go:
+OpenClaw ties three things together:
 
-| Provider | Key Format | Example |
-|----------|-----------|---------|
-| **OpenAI** | `sk-proj-...` | `revive sk-proj-XXXXXX` |
-| **Google Gemini** | `AIzaSy...` | `revive AIzaSyXXXXXX` |
-| **Anthropic** | `sk-ant-...` | `revive sk-ant-XXXXXX` |
-| **OpenRouter** | `sk-or-...` | `revive sk-or-XXXXXX` |
-| **Any other** | Any format | `revive YOUR_KEY` |
+| Config | What it stores |
+|--------|---------------|
+| **Auth Profile** | Your API key + provider (e.g. `google`) |
+| **Model** | Which model to use (e.g. `google/gemini-3-pro-preview`) |
+| **Gateway** | Runs locally and routes requests |
+
+When your key's quota runs out, OpenClaw can't call the AI model and stops responding. This tool swaps the **API key** while keeping the provider and model the same.
+
+### ✅ What this tool does:
+- Replaces the old API key with your new one
+- Resets the `errorCount` so OpenClaw doesn't skip the key
+- Restarts the gateway service
+
+### ⚠️ Important: Same Provider Only
+
+This tool swaps your key for a **new key from the same provider**. For example:
+
+| Your Setup | Swap With | Works? |
+|-----------|-----------|--------|
+| Google Gemini key → New Google Gemini key | ✅ Yes |
+| OpenAI key → New OpenAI key | ✅ Yes |
+| Anthropic key → New Anthropic key | ✅ Yes |
+| Google Gemini key → OpenAI key | ❌ No — different provider |
+
+**Why?** Because OpenClaw's model config (e.g. `google/gemini-3-pro-preview`) must match the API key's provider. Swapping a Google key with an OpenAI key won't work — the model would still try to call Google's API.
+
+**To switch providers entirely**, use OpenClaw's built-in commands:
+```bash
+openclaw models auth paste-token --provider openai
+openclaw models set openai/gpt-4o
+```
 
 ---
 
-## How to Get a New API Key
+## Where to Get a New API Key
 
 | Provider | Where to Get |
 |----------|-------------|
@@ -60,15 +84,6 @@ Works with **any** API key. Just paste your key and go:
 | **OpenAI** | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) |
 | **Anthropic** | [console.anthropic.com](https://console.anthropic.com/) |
 | **OpenRouter** | [openrouter.ai/keys](https://openrouter.ai/keys) |
-
----
-
-## What It Does
-
-1. 🔑 **Swaps** the old exhausted key with your new key in OpenClaw's auth config
-2. 🔄 **Resets** error counts so OpenClaw accepts the new key immediately
-3. 🚀 **Restarts** the gateway so changes take effect
-4. ✅ **Verifies** the new key is active
 
 ---
 
@@ -93,28 +108,15 @@ revive-openclaw-api-shortcut/
 
 ---
 
-## How It Works
-
-OpenClaw stores API keys in `~/.openclaw/agents/main/agent/auth-profiles.json`. When your key's quota runs out, OpenClaw can't call the AI model and stops responding.
-
-This tool:
-- Reads the auth profile JSON
-- Replaces the old API key with your new one
-- Resets the `errorCount` so OpenClaw doesn't skip the key
-- Restarts the gateway service
-
-No manual JSON editing. No guessing file paths. Just one command.
-
----
-
 ## Troubleshooting
 
 | Problem | Solution |
 |---------|----------|
 | `openclaw: command not found` | Make sure OpenClaw is installed and in your PATH |
 | `Auth file not found` | Run `openclaw doctor` to fix your installation |
-| Key still not working | Verify your new key is valid at your provider's dashboard |
+| Key still not working | Make sure the new key is from the **same provider** as your current setup |
 | Gateway won't restart | Run `openclaw gateway stop && openclaw gateway start` |
+| Want to switch providers | Use `openclaw models auth paste-token --provider <name>` + `openclaw models set <model>` |
 
 ---
 
